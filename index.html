@@ -1,94 +1,162 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="mr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>शिवस्वराज्य संघटना उत्सव App</title>
+  <title>शिवस्वराज्य संघटना - जमा व खर्च व्यवस्थापन</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 15px; background: #f4f6f9; }
-    .card { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    h2, h3 { margin-top: 0; color: #333; }
-    input, select, button { width: 100%; padding: 10px; margin: 5px 0 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-    button { background: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; }
-    button.danger { background: #dc3545; width: auto; padding: 5px 10px; margin: 0; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-    th { background: #f2f2f2; }
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background: #f0f2f5; margin: 0; padding: 12px; }
+    .card { background: white; padding: 16px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    h2, h3 { margin-top: 0; color: #1a237e; text-align: center; }
+    input, select, button { width: 100%; padding: 12px; margin: 6px 0 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+    button { background: #1a237e; color: white; border: none; font-weight: bold; cursor: pointer; }
+    button.danger { background: #d32f2f; width: auto; padding: 6px 12px; margin: 0; font-size: 13px; }
+    .nav-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+    .nav-tabs button { flex: 1; padding: 10px; background: #e0e0e0; color: #333; margin: 0; border-radius: 6px; }
+    .nav-tabs button.active { background: #1a237e; color: white; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 14px; }
+    th, td { border: 1px solid #e0e0e0; padding: 8px; text-align: left; }
+    th { background: #f5f5f5; color: #333; }
     .hidden { display: none; }
-    .totals { font-weight: bold; background: #e9ecef; }
+    .summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .stat-box { background: #f8f9fa; border-left: 4px solid #1a237e; padding: 10px; border-radius: 4px; }
+    .stat-box.exp { border-left-color: #d32f2f; }
+    .stat-box.bal { border-left-color: #388e3c; grid-column: span 2; background: #e8f5e9; }
+    .stat-title { font-size: 12px; color: #666; }
+    .stat-value { font-size: 18px; font-weight: bold; color: #1a237e; margin-top: 4px; }
+    .stat-box.exp .stat-value { color: #d32f2f; }
+    .stat-box.bal .stat-value { color: #2e7d32; }
   </style>
 </head>
 <body>
 
   <!-- Login Section -->
   <div id="loginSection" class="card">
-    <h2>Login</h2>
-    <input type="text" id="username" placeholder="Username (e.g. User 1)">
-    <input type="password" id="password" placeholder="Password">
-    <button onclick="login()">Login</button>
+    <h2>शिवस्वराज्य संघटना</h2>
+    <p style="text-align:center; color:#666;">लॉगिन करा</p>
+    <input type="text" id="username" placeholder="युझरनाव (उदा. User 1)">
+    <input type="password" id="password" placeholder="पासवर्ड">
+    <button onclick="login()">लॉगिन</button>
   </div>
 
   <!-- Main App Section -->
   <div id="appSection" class="hidden">
-    <div class="card">
-      <h2 id="userWelcome"></h2>
-      <button onclick="logout()" style="background:#6c757d;">Logout</button>
+    <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <strong id="userWelcome"></strong>
+      </div>
+      <button onclick="logout()" style="width:auto; padding:6px 12px; margin:0; background:#616161;">लॉगआउट</button>
     </div>
 
-    <!-- Event Selection/Creation -->
+    <!-- Overall Summary -->
     <div class="card">
-      <h3>1. Select Event (उत्सव)</h3>
-      <select id="eventSelect" onchange="loadEventData()">
-        <option value="Shiv Jayanti 2026">Shiv Jayanti 2026</option>
-      </select>
-      
-      <div id="adminEventControls" class="hidden">
-        <input type="text" id="newEventName" placeholder="New Event Name (e.g. Ganesh Utsav)">
-        <button onclick="addNewEvent()" style="background:#28a745;">Add New Event</button>
+      <h3>एकूण हिशोब (Summary)</h3>
+      <div class="summary-grid">
+        <div class="stat-box">
+          <div class="stat-title">मंडळ वर्गणी जमा</div>
+          <div class="stat-value" id="incMandal">₹0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-title">पावती पुस्तक जमा</div>
+          <div class="stat-value" id="incPawti">₹0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-title">राजकीय वर्गणी जमा</div>
+          <div class="stat-value" id="incRajnaitik">₹0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-title">एकूण जमा (Total Income)</div>
+          <div class="stat-value" id="totIncome">₹0</div>
+        </div>
+        <div class="stat-box exp">
+          <div class="stat-title">एकूण खर्च (Total Expense)</div>
+          <div class="stat-value" id="totExpense">₹0</div>
+        </div>
+        <div class="stat-box bal">
+          <div class="stat-title">शिल्लक रक्कम (Net Balance)</div>
+          <div class="stat-value" id="netBalance">₹0</div>
+        </div>
       </div>
     </div>
 
-    <!-- Add Donation Form -->
-    <div class="card">
-      <h3>2. Add Donation Entry</h3>
-      <input type="text" id="donorName" placeholder="Donor Name">
-      <input type="number" id="donorAmount" placeholder="Amount (₹)">
-      <select id="donorCategory">
-        <option value="P1">Category P1</option>
-        <option value="P2">Category P2</option>
-        <option value="P3">Category P3</option>
+    <!-- Tabs Navigation -->
+    <div class="nav-tabs">
+      <button id="tabIncBtn" class="active" onclick="switchTab('income')">+ वर्गणी जमा करा</button>
+      <button id="tabExpBtn" onclick="switchTab('expense')">- खर्च नोंदवा</button>
+    </div>
+
+    <!-- Add Income Form -->
+    <div id="incomeFormCard" class="card">
+      <h3>नवीन वर्गणी नोंदवा</h3>
+      <select id="incCategory">
+        <option value="मंडळ वर्गणी">मंडळ वर्गणी</option>
+        <option value="पावती पुस्तक">पावती पुस्तक</option>
+        <option value="राजकीय वर्गणी">राजकीय वर्गणी</option>
       </select>
-      <button onclick="addDonation()">Save Entry</button>
+      <input type="text" id="incName" placeholder="देणगीदाराचे नाव">
+      <input type="number" id="incAmount" placeholder="रक्कम (₹)">
+      <button onclick="addIncome()" style="background:#2e7d32;">जमा करा</button>
     </div>
 
-    <!-- Totals Summary -->
-    <div class="card">
-      <h3>Category Totals</h3>
-      <p class="totals">P1: ₹<span id="totP1">0</span> | P2: ₹<span id="totP2">0</span> | P3: ₹<span id="totP3">0</span></p>
-      <p class="totals" style="color: green;">Grand Total: ₹<span id="totGrand">0</span></p>
+    <!-- Add Expense Form -->
+    <div id="expenseFormCard" class="card hidden">
+      <h3>नवीन खर्च नोंदवा</h3>
+      <label style="font-size:13px; color:#666;">खर्च कोणत्या फंडातून करायचा आहे?</label>
+      <select id="expFund">
+        <option value="मंडळ वर्गणी">मंडळ वर्गणी फंड</option>
+        <option value="पावती पुस्तक">पावती पुस्तक फंड</option>
+        <option value="राजकीय वर्गणी">राजकीय वर्गणी फंड</option>
+      </select>
+      <input type="text" id="expReason" placeholder="खर्चाचे कारण / तपशील">
+      <input type="number" id="expAmount" placeholder="खर्च रक्कम (₹)">
+      <button onclick="addExpense()" style="background:#d32f2f;">खर्च नोंदवा</button>
     </div>
 
-    <!-- Donations List -->
+    <!-- Data Tables -->
     <div class="card">
-      <h3>Donation History</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Amount</th>
-            <th>Cat</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody id="donationTableBody"></tbody>
-      </table>
+      <h3>जमा व खर्चाची यादी</h3>
+      <div class="nav-tabs">
+        <button id="viewIncBtn" class="active" onclick="switchView('income')">जमा यादी</button>
+        <button id="viewExpBtn" onclick="switchView('expense')">खर्च यादी</button>
+      </div>
+
+      <!-- Income Table -->
+      <div id="incomeTableDiv">
+        <table>
+          <thead>
+            <tr>
+              <th>प्रकार</th>
+              <th>नाव</th>
+              <th>रक्कम</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="incomeTableBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Expense Table -->
+      <div id="expenseTableDiv" class="hidden">
+        <table>
+          <thead>
+            <tr>
+              <th>फंड प्रकार</th>
+              <th>कारण</th>
+              <th>रक्कम</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="expenseTableBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
   <script>
-    // Firebase Config (Replace with your own config if needed)
+    // Firebase Setup
     const firebaseConfig = {
       databaseURL: "https://shivswarajya-sanghatna-app-default-rtdb.firebaseio.com"
     };
@@ -100,118 +168,181 @@
     function login() {
       const u = document.getElementById('username').value.trim();
       const p = document.getElementById('password').value.trim();
+      
       if(u === 'User 1' && p === 'admin123') {
         currentUser = { name: u, role: 'admin' };
       } else if(u && p) {
         currentUser = { name: u, role: 'user' };
       } else {
-        alert('Invalid Details');
+        alert('कृपया योग्य Username आणि Password टाका!');
         return;
       }
+
       document.getElementById('loginSection').classList.add('hidden');
       document.getElementById('appSection').classList.remove('hidden');
-      document.getElementById('userWelcome').innerText = `Welcome, ${currentUser.name} (${currentUser.role})`;
+      document.getElementById('userWelcome').innerText = `${currentUser.name} (${currentUser.role === 'admin' ? 'Super Admin' : 'User'})`;
       
-      if(currentUser.role === 'admin') {
-        document.getElementById('adminEventControls').classList.remove('hidden');
-      }
-      
-      loadEvents();
+      loadData();
     }
 
     function logout() {
       location.reload();
     }
 
-    function loadEvents() {
-      db.ref('events').on('value', snapshot => {
-        const select = document.getElementById('eventSelect');
-        select.innerHTML = '';
-        const data = snapshot.val();
-        if(data) {
-          Object.keys(data).forEach(evt => {
-            let opt = document.createElement('option');
-            opt.value = evt;
-            opt.innerText = evt;
-            select.appendChild(opt);
-          });
-        } else {
-          db.ref('events/Shiv Jayanti 2026').set(true);
-        }
-        loadEventData();
-      });
+    function switchTab(tab) {
+      if(tab === 'income') {
+        document.getElementById('incomeFormCard').classList.remove('hidden');
+        document.getElementById('expenseFormCard').classList.add('hidden');
+        document.getElementById('tabIncBtn').classList.add('active');
+        document.getElementById('tabExpBtn').classList.remove('active');
+      } else {
+        document.getElementById('incomeFormCard').classList.add('hidden');
+        document.getElementById('expenseFormCard').classList.remove('hidden');
+        document.getElementById('tabIncBtn').classList.remove('active');
+        document.getElementById('tabExpBtn').classList.add('active');
+      }
     }
 
-    function addNewEvent() {
-      const name = document.getElementById('newEventName').value.trim();
-      if(!name) return;
-      db.ref('events/' + name).set(true);
-      document.getElementById('newEventName').value = '';
-      alert('Event Created!');
+    function switchView(view) {
+      if(view === 'income') {
+        document.getElementById('incomeTableDiv').classList.remove('hidden');
+        document.getElementById('expenseTableDiv').classList.add('hidden');
+        document.getElementById('viewIncBtn').classList.add('active');
+        document.getElementById('viewExpBtn').classList.remove('active');
+      } else {
+        document.getElementById('incomeTableDiv').classList.add('hidden');
+        document.getElementById('expenseTableDiv').classList.remove('hidden');
+        document.getElementById('viewIncBtn').classList.remove('active');
+        document.getElementById('viewExpBtn').classList.add('active');
+      }
     }
 
-    function addDonation() {
-      const eventName = document.getElementById('eventSelect').value;
-      const name = document.getElementById('donorName').value.trim();
-      const amount = parseFloat(document.getElementById('donorAmount').value);
-      const category = document.getElementById('donorCategory').value;
+    function addIncome() {
+      const cat = document.getElementById('incCategory').value;
+      const name = document.getElementById('incName').value.trim();
+      const amt = parseFloat(document.getElementById('incAmount').value);
 
-      if(!name || isNaN(amount)) {
-        alert('Enter valid name and amount');
+      if(!name || isNaN(amt) || amt <= 0) {
+        alert('कृपया नाव आणि योग्य रक्कम प्रविष्ट करा!');
         return;
       }
 
-      db.ref(`donations/${eventName}`).push({
+      db.ref('incomes').push({
+        category: cat,
         name: name,
-        amount: amount,
-        category: category,
-        addedBy: currentUser.name
+        amount: amt,
+        addedBy: currentUser.name,
+        date: new Date().toLocaleDateString('en-IN')
       });
 
-      document.getElementById('donorName').value = '';
-      document.getElementById('donorAmount').value = '';
+      document.getElementById('incName').value = '';
+      document.getElementById('incAmount').value = '';
+      alert('जमा नोंदवली गेली!');
     }
 
-    function loadEventData() {
-      const eventName = document.getElementById('eventSelect').value;
-      if(!eventName) return;
+    function addExpense() {
+      const fund = document.getElementById('expFund').value;
+      const reason = document.getElementById('expReason').value.trim();
+      const amt = parseFloat(document.getElementById('expAmount').value);
 
-      db.ref(`donations/${eventName}`).on('value', snapshot => {
-        const tbody = document.getElementById('donationTableBody');
+      if(!reason || isNaN(amt) || amt <= 0) {
+        alert('कृपया खर्चाचे कारण आणि योग्य रक्कम टाका!');
+        return;
+      }
+
+      db.ref('expenses').push({
+        fund: fund,
+        reason: reason,
+        amount: amt,
+        addedBy: currentUser.name,
+        date: new Date().toLocaleDateString('en-IN')
+      });
+
+      document.getElementById('expReason').value = '';
+      document.getElementById('expAmount').value = '';
+      alert('खर्च नोंदवला गेला!');
+    }
+
+    function loadData() {
+      // Load Incomes
+      db.ref('incomes').on('value', snapshot => {
+        let incM = 0, incP = 0, incR = 0;
+        const tbody = document.getElementById('incomeTableBody');
         tbody.innerHTML = '';
-        
-        let p1 = 0, p2 = 0, p3 = 0;
         const data = snapshot.val();
 
         if(data) {
           Object.keys(data).forEach(key => {
             const item = data[key];
-            if(item.category === 'P1') p1 += item.amount;
-            if(item.category === 'P2') p2 += item.amount;
-            if(item.category === 'P3') p3 += item.amount;
+            if(item.category === 'मंडळ वर्गणी') incM += item.amount;
+            if(item.category === 'पावती पुस्तक') incP += item.amount;
+            if(item.category === 'राजकीय वर्गणी') incR += item.amount;
+
+            let deleteBtn = currentUser.role === 'admin' 
+              ? `<button class="danger" onclick="deleteItem('incomes', '${key}')">हटवा</button>` 
+              : '-';
 
             let row = `<tr>
+              <td><b>${item.category}</b></td>
               <td>${item.name}</td>
               <td>₹${item.amount}</td>
-              <td>${item.category}</td>
-              <td>
-                <button class="danger" onclick="deleteEntry('${eventName}', '${key}')">Delete</button>
-              </td>
+              <td>${deleteBtn}</td>
             </tr>`;
             tbody.innerHTML += row;
           });
         }
 
-        document.getElementById('totP1').innerText = p1;
-        document.getElementById('totP2').innerText = p2;
-        document.getElementById('totP3').innerText = p3;
-        document.getElementById('totGrand').innerText = p1 + p2 + p3;
+        document.getElementById('incMandal').innerText = '₹' + incM;
+        document.getElementById('incPawti').innerText = '₹' + incP;
+        document.getElementById('incRajnaitik').innerText = '₹' + incR;
+        
+        const totalInc = incM + incP + incR;
+        document.getElementById('totIncome').innerText = '₹' + totalInc;
+
+        updateTotals(totalInc);
+      });
+
+      // Load Expenses
+      db.ref('expenses').on('value', snapshot => {
+        let totalExp = 0;
+        const tbody = document.getElementById('expenseTableBody');
+        tbody.innerHTML = '';
+        const data = snapshot.val();
+
+        if(data) {
+          Object.keys(data).forEach(key => {
+            const item = data[key];
+            totalExp += item.amount;
+
+            let deleteBtn = currentUser.role === 'admin' 
+              ? `<button class="danger" onclick="deleteItem('expenses', '${key}')">हटवा</button>` 
+              : '-';
+
+            let row = `<tr>
+              <td><b style="color:#d32f2f;">${item.fund}</b></td>
+              <td>${item.reason}</td>
+              <td>₹${item.amount}</td>
+              <td>${deleteBtn}</td>
+            </tr>`;
+            tbody.innerHTML += row;
+          });
+        }
+
+        document.getElementById('totExpense').innerText = '₹' + totalExp;
+        
+        const totalInc = parseFloat(document.getElementById('totIncome').innerText.replace('₹','')) || 0;
+        document.getElementById('netBalance').innerText = '₹' + (totalInc - totalExp);
       });
     }
 
-    function deleteEntry(eventName, key) {
-      if(confirm('Are you sure you want to delete this entry?')) {
-        db.ref(`donations/${eventName}/${key}`).remove();
+    function updateTotals(totalInc) {
+      const totalExp = parseFloat(document.getElementById('totExpense').innerText.replace('₹','')) || 0;
+      document.getElementById('netBalance').innerText = '₹' + (totalInc - totalExp);
+    }
+
+    function deleteItem(path, key) {
+      if(confirm('तुम्हाला ही नोंद नक्की हटवायची आहे का?')) {
+        db.ref(`${path}/${key}`).remove();
       }
     }
   </script>
