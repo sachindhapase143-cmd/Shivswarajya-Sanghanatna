@@ -1,232 +1,219 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>शिवस्वराज्य संघटना उत्सव App - Live Manager</title>
-<style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#1f2937}
-header{background:#0f172a;color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center}
-h1,h2,h3{margin:0 0 10px}.wrap{max-width:1200px;margin:18px auto;padding:0 14px}.card{background:#fff;border-radius:12px;padding:18px;margin-bottom:16px;box-shadow:0 2px 8px #00000012}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.stat{padding:16px;border:1px solid #e5e7eb;border-radius:10px}.stat b{font-size:24px}
-input,select,button{width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:14px}button{cursor:pointer;background:#0f172a;color:#fff;border:0}button.secondary{background:#64748b}button.danger{background:#b91c1c}.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1;min-width:140px}
-table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:9px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:13px}th{background:#f8fafc}
-.hidden{display:none!important}.muted{color:#64748b;font-size:13px}
-#loginBox{max-width:460px;margin:50px auto}.notice{padding:10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;margin-bottom:12px}
-.um-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
-.um-table{width:100%;border-collapse:collapse;margin-top:14px;font-size:13px}
-.um-table th,.um-table td{border:1px solid #e2e8f0;padding:8px;text-align:left}
-</style>
-
-<!-- Firebase Compatible SDKs -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>शिवस्वराज्य संघटना उत्सव App</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 15px; background: #f4f6f9; }
+    .card { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    h2, h3 { margin-top: 0; color: #333; }
+    input, select, button { width: 100%; padding: 10px; margin: 5px 0 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+    button { background: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; }
+    button.danger { background: #dc3545; width: auto; padding: 5px 10px; margin: 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background: #f2f2f2; }
+    .hidden { display: none; }
+    .totals { font-weight: bold; background: #e9ecef; }
+  </style>
 </head>
 <body>
-<header>
-  <div><b>शिवस्वराज्य संघटना उत्सव App</b><span class="muted" style="color:#cbd5e1"> — Live Multi-Device Sync</span></div>
-  <button id="logout" style="width:auto;padding:8px 14px" class="secondary hidden">Logout</button>
-</header>
 
-<div class="wrap">
-<section id="loginBox" class="card">
-<h2>Login</h2>
-<label>Username</label><input id="username" placeholder="User 1 / User 2 / User 3">
-<label style="display:block;margin-top:10px">Password</label><input id="password" type="password">
-<button id="login" style="margin-top:14px">Login</button>
-<p class="muted" style="margin-top:10px">Default Admin: <b>User 1</b> | Password: <b>admin123</b></p>
-<div id="msg" class="notice hidden" style="margin-top:10px"></div>
-</section>
-
-<section id="app" class="hidden">
-<div class="card">
-  <div class="row">
-    <div><h2 id="dashTitle">Dashboard</h2><div id="roleText" class="muted"></div></div>
+  <!-- Login Section -->
+  <div id="loginSection" class="card">
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="Username (e.g. User 1)">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
   </div>
-</div>
 
-<div id="adminTools" class="card hidden">
-  <h3>User & Access Management (Admin Only)</h3>
-  <div class="um-grid">
-    <input id="umUsername" placeholder="Username">
-    <input id="umPassword" type="password" placeholder="Password">
-    <select id="umRole">
-      <option value="p1">P1 Internal</option>
-      <option value="p2">P2 Outside</option>
-      <option value="p3">P3 Big Donation</option>
-      <option value="admin">Admin (Full Access)</option>
-    </select>
+  <!-- Main App Section -->
+  <div id="appSection" class="hidden">
+    <div class="card">
+      <h2 id="userWelcome"></h2>
+      <button onclick="logout()" style="background:#6c757d;">Logout</button>
+    </div>
+
+    <!-- Event Selection/Creation -->
+    <div class="card">
+      <h3>1. Select Event (उत्सव)</h3>
+      <select id="eventSelect" onchange="loadEventData()">
+        <option value="Shiv Jayanti 2026">Shiv Jayanti 2026</option>
+      </select>
+      
+      <div id="adminEventControls" class="hidden">
+        <input type="text" id="newEventName" placeholder="New Event Name (e.g. Ganesh Utsav)">
+        <button onclick="addNewEvent()" style="background:#28a745;">Add New Event</button>
+      </div>
+    </div>
+
+    <!-- Add Donation Form -->
+    <div class="card">
+      <h3>2. Add Donation Entry</h3>
+      <input type="text" id="donorName" placeholder="Donor Name">
+      <input type="number" id="donorAmount" placeholder="Amount (₹)">
+      <select id="donorCategory">
+        <option value="P1">Category P1</option>
+        <option value="P2">Category P2</option>
+        <option value="P3">Category P3</option>
+      </select>
+      <button onclick="addDonation()">Save Entry</button>
+    </div>
+
+    <!-- Totals Summary -->
+    <div class="card">
+      <h3>Category Totals</h3>
+      <p class="totals">P1: ₹<span id="totP1">0</span> | P2: ₹<span id="totP2">0</span> | P3: ₹<span id="totP3">0</span></p>
+      <p class="totals" style="color: green;">Grand Total: ₹<span id="totGrand">0</span></p>
+    </div>
+
+    <!-- Donations List -->
+    <div class="card">
+      <h3>Donation History</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Amount</th>
+            <th>Cat</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="donationTableBody"></tbody>
+      </table>
+    </div>
   </div>
-  <button id="umSave" style="margin-top:10px;width:auto">Save / Create User</button>
-  <div id="umTableWrap"></div>
-</div>
 
-<div class="grid">
-  <div class="stat"><div class="muted">P1 Internal</div><b id="p1Total">₹0</b></div>
-  <div class="stat"><div class="muted">P2 Outside</div><b id="p2Total">₹0</b></div>
-  <div class="stat"><div class="muted">P3 Big Donation</div><b id="p3Total">₹0</b></div>
-  <div class="stat"><div class="muted">Grand Total</div><b id="grandTotal">₹0</b></div>
-</div>
+  <script>
+    // Firebase Config (Replace with your own config if needed)
+    const firebaseConfig = {
+      databaseURL: "https://shivswarajya-sanghatna-app-default-rtdb.firebaseio.com"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-<div class="card">
-<h3 id="entryTitle">Add Record</h3>
-<div class="row">
-<select id="type"><option value="donation">Donation</option><option value="expense">Expense</option></select>
-<select id="account">
-  <option value="P1 Internal">P1 Internal</option>
-  <option value="P2 Outside">P2 Outside</option>
-  <option value="P3 Big Donation">P3 Big Donation</option>
-</select>
-<input id="date" type="date"><input id="party" placeholder="Name / Description"><input id="amount" type="number" min="0" placeholder="Amount">
-<button id="save">Save Record</button>
-</div>
-</div>
+    let currentUser = null;
 
-<div class="card">
-<h3>Live Records</h3>
-<table>
-  <thead><tr><th>Date</th><th>Type</th><th>Account</th><th>Name/Description</th><th>Amount</th><th>Added By</th><th>Action</th></tr></thead>
-  <tbody id="records"></tbody>
-</table>
-</div>
-</section>
-</div>
-
-<script>
-// Aapki Config Keys yahan configured hain:
-const firebaseConfig = {
-  apiKey: "AIzaSyAPkjt-ovfwclA88uwK1Uvkz6_U",
-  authDomain: "shivswarajya-sanghatna-app.firebaseapp.com",
-  databaseURL: "https://shivswarajya-sanghatna-app-default-rtdb.firebaseio.com",
-  projectId: "shivswarajya-sanghatna-app",
-  storageBucket: "shivswarajya-sanghatna-app.firebasestorage.app",
-  messagingSenderId: "78751783461",
-  appId: "1:78751783461:web:4846cd3e8912537"
-};
-
-firebase.initializeApp(firebaseConfig);
-const rtdb = firebase.database();
-
-const roleAccount = { p1: 'P1 Internal', p2: 'P2 Outside', p3: 'P3 Big Donation' };
-let session = null;
-const $ = id => document.getElementById(id);
-function money(n){ return '₹' + Number(n||0).toLocaleString('en-IN'); }
-$('date').value = new Date().toISOString().slice(0,10);
-
-// Default Admin Initialization
-rtdb.ref('users/User 1').transaction((current) => {
-  if (!current) return { u: 'User 1', p: 'admin123', role: 'admin' };
-});
-
-$('login').onclick = () => {
-  const uInput = $('username').value.trim();
-  const pInput = $('password').value;
-  
-  rtdb.ref('users/' + uInput).once('value', snapshot => {
-    const u = snapshot.val();
-    if (!u || u.p !== pInput) {
-      $('msg').textContent = 'Invalid username or password.';$('msg').classList.remove('hidden');
-      return;
+    function login() {
+      const u = document.getElementById('username').value.trim();
+      const p = document.getElementById('password').value.trim();
+      if(u === 'User 1' && p === 'admin123') {
+        currentUser = { name: u, role: 'admin' };
+      } else if(u && p) {
+        currentUser = { name: u, role: 'user' };
+      } else {
+        alert('Invalid Details');
+        return;
+      }
+      document.getElementById('loginSection').classList.add('hidden');
+      document.getElementById('appSection').classList.remove('hidden');
+      document.getElementById('userWelcome').innerText = `Welcome, ${currentUser.name} (${currentUser.role})`;
+      
+      if(currentUser.role === 'admin') {
+        document.getElementById('adminEventControls').classList.remove('hidden');
+      }
+      
+      loadEvents();
     }
-    session = u;
-    $('loginBox').classList.add('hidden');
-    $('app').classList.remove('hidden');$('logout').classList.remove('hidden');
-    $('adminTools').classList.toggle('hidden', u.role !== 'admin');$('roleText').textContent = u.role === 'admin' ? 'ADMIN - Full Access' : u.u + ' (' + (roleAccount[u.role]||u.role) + ')';
-    
-    // Account Selector control per role
-    $('account').disabled = session.role !== 'admin';
-    if (session.role !== 'admin') $('account').value = roleAccount[session.role];
 
-    setupLiveSync();
-    if (u.role === 'admin') loadUsersAdmin();
-  });
-};
-
-$('logout').onclick = () => location.reload();
-
-function setupLiveSync() {
-  rtdb.ref('records').on('value', snapshot => {
-    const data = snapshot.val() || {};
-    const list = Object.keys(data).map(k => ({ id: k, ...data[k] }));
-    
-    let p1 = 0, p2 = 0, p3 = 0;
-    list.forEach(r => {
-      const amt = r.type === 'donation' ? Number(r.amount) : -Number(r.amount);
-      if (r.account === 'P1 Internal') p1 += amt;
-      if (r.account === 'P2 Outside') p2 += amt;
-      if (r.account === 'P3 Big Donation') p3 += amt;
-    });
-
-    $('p1Total').textContent = money(p1);$('p2Total').textContent = money(p2);
-    $('p3Total').textContent = money(p3);$('grandTotal').textContent = money(p1 + p2 + p3);
-
-    // Permission filter based on User Role
-    const filtered = list.filter(r => {
-      if (session.role === 'admin') return true;
-      return r.account === roleAccount[session.role];
-    });
-
-    $('records').innerHTML = filtered.reverse().map(r => `
-      <tr>
-        <td>${r.date}</td><td>${r.type}</td><td>${r.account}</td>
-        <td>${r.party}</td><td>${money(r.amount)}</td><td>${r.by}</td>
-        <td>${session.role === 'admin' ? `<button onclick="delRec('${r.id}')" class="danger" style="width:auto;padding:4px 8px">Delete</button>` : ''}</td>
-      </tr>
-    `).join('') || '<tr><td colspan="7">No records available.</td></tr>';
-  });
-}
-
-$('save').onclick = () => {
-  const account = session.role === 'admin' ? $('account').value : roleAccount[session.role];
-  const party = $('party').value.trim();
-  const amount = Number($('amount').value);
-  if (!party || amount <= 0) return alert('Please enter valid details.');
-
-  const newRef = rtdb.ref('records').push();
-  newRef.set({
-    type: $('type').value,
-    account: account,
-    date: $('date').value,
-    party: party,
-    amount: amount,
-    by: session.u
-  }, err => {
-    if (!err) {
-      $('party').value = '';$('amount').value = '';
+    function logout() {
+      location.reload();
     }
-  });
-};
 
-window.delRec = id => {
-  if (session.role === 'admin' && confirm('Delete this record?')) {
-    rtdb.ref('records/' + id).remove();
-  }
-};
-
-function loadUsersAdmin() {
-  rtdb.ref('users').on('value', snapshot => {
-    const users = snapshot.val() || {};
-    let html = '<table class="um-table"><thead><tr><th>User</th><th>Role</th></tr></thead><tbody>';
-    for (let u in users) {
-      html += `<tr><td>${users[u].u}</td><td>${users[u].role}</td></tr>`;
+    function loadEvents() {
+      db.ref('events').on('value', snapshot => {
+        const select = document.getElementById('eventSelect');
+        select.innerHTML = '';
+        const data = snapshot.val();
+        if(data) {
+          Object.keys(data).forEach(evt => {
+            let opt = document.createElement('option');
+            opt.value = evt;
+            opt.innerText = evt;
+            select.appendChild(opt);
+          });
+        } else {
+          db.ref('events/Shiv Jayanti 2026').set(true);
+        }
+        loadEventData();
+      });
     }
-    $('umTableWrap').innerHTML = html + '</tbody></table>';
-  });
-}
 
-$('umSave').onclick = () => {
-  const u = $('umUsername').value.trim();
-  const p = $('umPassword').value;
-  const role = $('umRole').value;
-  if (!u || !p) return alert('Fill all user fields.');
-  
-  rtdb.ref('users/' + u).set({ u, p, role }, err => {
-    if (!err) {
-      alert('User updated/created successfully.');
-      $('umUsername').value = '';$('umPassword').value = '';
+    function addNewEvent() {
+      const name = document.getElementById('newEventName').value.trim();
+      if(!name) return;
+      db.ref('events/' + name).set(true);
+      document.getElementById('newEventName').value = '';
+      alert('Event Created!');
     }
-  });
-};
-</script>
+
+    function addDonation() {
+      const eventName = document.getElementById('eventSelect').value;
+      const name = document.getElementById('donorName').value.trim();
+      const amount = parseFloat(document.getElementById('donorAmount').value);
+      const category = document.getElementById('donorCategory').value;
+
+      if(!name || isNaN(amount)) {
+        alert('Enter valid name and amount');
+        return;
+      }
+
+      db.ref(`donations/${eventName}`).push({
+        name: name,
+        amount: amount,
+        category: category,
+        addedBy: currentUser.name
+      });
+
+      document.getElementById('donorName').value = '';
+      document.getElementById('donorAmount').value = '';
+    }
+
+    function loadEventData() {
+      const eventName = document.getElementById('eventSelect').value;
+      if(!eventName) return;
+
+      db.ref(`donations/${eventName}`).on('value', snapshot => {
+        const tbody = document.getElementById('donationTableBody');
+        tbody.innerHTML = '';
+        
+        let p1 = 0, p2 = 0, p3 = 0;
+        const data = snapshot.val();
+
+        if(data) {
+          Object.keys(data).forEach(key => {
+            const item = data[key];
+            if(item.category === 'P1') p1 += item.amount;
+            if(item.category === 'P2') p2 += item.amount;
+            if(item.category === 'P3') p3 += item.amount;
+
+            let row = `<tr>
+              <td>${item.name}</td>
+              <td>₹${item.amount}</td>
+              <td>${item.category}</td>
+              <td>
+                <button class="danger" onclick="deleteEntry('${eventName}', '${key}')">Delete</button>
+              </td>
+            </tr>`;
+            tbody.innerHTML += row;
+          });
+        }
+
+        document.getElementById('totP1').innerText = p1;
+        document.getElementById('totP2').innerText = p2;
+        document.getElementById('totP3').innerText = p3;
+        document.getElementById('totGrand').innerText = p1 + p2 + p3;
+      });
+    }
+
+    function deleteEntry(eventName, key) {
+      if(confirm('Are you sure you want to delete this entry?')) {
+        db.ref(`donations/${eventName}/${key}`).remove();
+      }
+    }
+  </script>
 </body>
 </html>
